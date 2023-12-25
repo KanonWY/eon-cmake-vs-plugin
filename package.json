@@ -2,6 +2,7 @@
   "name": "vscode-plugin-demo",
   "displayName": "vscode-plugin-demo",
   "description": "VSCode插件 demo",
+  "publisher": "kanon",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.85.0"
@@ -9,23 +10,40 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:cmake"
+  ],
   "main": "./out/extension.js",
   "contributes": {
+    "languages": [
+      {
+        "id": "cmake",
+        "extensions": [
+          ".cmake"
+        ],
+        "filenames": [
+          "CMakeLists.txt"
+        ],
+        "aliases": [
+          "CMake"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "cmake",
+        "scopeName": "source.cmake",
+        "path": "./syntaxes/CMake.tmLanguage"
+      }
+    ],
     "configuration": [
       {
-        "type": "objcect",
-        "title": "vscode-plugin-demo",
+        "title": "CMake configuration",
         "properties": {
-          "vscodePluginDemo.yourName": {
+          "cmake.cmakePath": {
             "type": "string",
-            "default": "kanon",
-            "description": "你的名字"
-          },
-          "vscodePluginDemo.showTip": {
-            "type": "boolean",
-            "default": true,
-            "description": "是否在启动时加载显示欢迎界面"
+            "default": "cmake",
+            "description": "The path to CMake generator executable"
           }
         }
       }
@@ -33,7 +51,19 @@
     "commands": [
       {
         "command": "extension.sayHello",
-        "title": "Hello World"
+        "title": "EON HELLO"
+      },
+      {
+        "command": "extension.demo.getCurrentFilePath",
+        "title": "Eon Get Cur path"
+      },
+      {
+        "command": "extension.demo.testEditorCommand",
+        "title": "TEST editor"
+      },
+      {
+        "command": "extension.demo.testMenuShow",
+        "title": "该菜单仅在 cmake 中出现"
       }
     ],
     "keybindings": [
@@ -49,26 +79,29 @@
         {
           "when": "editorFocus",
           "command": "extension.sayHello",
-          "group": "navigation@6"
+          "group": "navigation@2"
         },
         {
-          "when": "editorFocus",
+          "when": "editorFocus && resourceLangId == cmake",
           "command": "extension.demo.getCurrentFilePath",
-          "group": "navigation@5"
+          "group": "navigation@1"
         },
         {
-          "when": "editorFocus && resourceLangId == CMakeLists.txt",
+          "when": "editorFocus && resourceLangId == cmake",
           "command": "extension.demo.testMenuShow",
           "group": "z_commands"
-        },
+        }
+      ],
+      "explorer/context": [
         {
-          "command": "extension.demo.openWebview",
+          "when": "resourceLangId == cmake",
+          "command": "extension.demo.getCurrentFilePath",
           "group": "navigation"
         }
       ],
       "editor/title": [
         {
-          "when": "editorFocus && resourceLangId == CMakeLists.txt",
+          "when": "editorFocus && resourceLangId == cmake",
           "command": "extension.demo.testMenuShow",
           "group": "navigation"
         }

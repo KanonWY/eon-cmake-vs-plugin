@@ -1,0 +1,97 @@
+{
+  "name": "vscode-plugin-demo",
+  "displayName": "vscode-plugin-demo",
+  "description": "VSCode插件 demo",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": [
+      {
+        "type": "objcect",
+        "title": "vscode-plugin-demo",
+        "properties": {
+          "vscodePluginDemo.yourName": {
+            "type": "string",
+            "default": "kanon",
+            "description": "你的名字"
+          },
+          "vscodePluginDemo.showTip": {
+            "type": "boolean",
+            "default": true,
+            "description": "是否在启动时加载显示欢迎界面"
+          }
+        }
+      }
+    ],
+    "commands": [
+      {
+        "command": "extension.sayHello",
+        "title": "Hello World"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "extension.sayHello",
+        "key": "ctrl+f10",
+        "mac": "cmd+f10",
+        "when": "editorTextFocus"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "editorFocus",
+          "command": "extension.sayHello",
+          "group": "navigation@6"
+        },
+        {
+          "when": "editorFocus",
+          "command": "extension.demo.getCurrentFilePath",
+          "group": "navigation@5"
+        },
+        {
+          "when": "editorFocus && resourceLangId == CMakeLists.txt",
+          "command": "extension.demo.testMenuShow",
+          "group": "z_commands"
+        },
+        {
+          "command": "extension.demo.openWebview",
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "when": "editorFocus && resourceLangId == CMakeLists.txt",
+          "command": "extension.demo.testMenuShow",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
+    "@vscode/test-cli": "^0.0.4",
+    "@vscode/test-electron": "^2.3.8"
+  }
+}

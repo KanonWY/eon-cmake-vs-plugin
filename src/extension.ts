@@ -15,7 +15,6 @@ function strEquals(word: string, pattern: string) {
 	return word === pattern;
 }
 
-
 /// configuration helpers
 function config<T>(key: string, defaultValue?: any): T {
 	const cmake_conf = vscode.workspace.getConfiguration('cmake');
@@ -64,6 +63,12 @@ let cmake = (args: string[]): Promise<string> => {
 		cmd.on('exit', function (code) {
 			resolve(stdout);
 		});
+	});
+};
+
+let eon = (): Promise<string> => {
+	return new Promise(function (resolve, reject) {
+		return resolve("eon_add_library\neon_add_executable\neon_add_protobuf\neon_add_executable_test");
 	});
 };
 
@@ -203,6 +208,9 @@ function cmake_help_all() {
 		,
 		'property': (name: string) => {
 			return cmake_help_property(name);
+		},
+		'eon': (name: string) => {
+			return eon_help(name);
 		}
 	};
 	return promises;
@@ -295,6 +303,46 @@ function cmPropetryInsertText(variable: string) {
 	return variable.replace(/<(.*)>/g, '${1:<$1>}');
 }
 
+///////////////////////////////////////////////////////////////
+// eon 命令提示
+function cmEONCommandsSuggestions(currentWord: string): Thenable<vscode.CompletionItem[]> {
+	let cmd = eon_help_list();
+	return suggestionsHelper(cmd, currentWord, 'eon', cmEonInsertText, strContains);
+}
+
+function cmEonInsertText(func: string) {
+	let scoped_func = ['eon'];
+	let is_scoped = scoped_func.reduceRight(function (prev, name, idx, array) { return prev || func === name; }, false);
+	if (is_scoped) {
+		return func + '(${1})\n\t\nend' + func + '(${1})\n';
+	}
+	else {
+		return func + '(${1})';
+	}
+}
+
+function eon_help_list(): Promise<string> {
+	return eon();
+}
+
+function eon_help(name: string): Promise<string> {
+	return eon_help_list()
+		.then(function (result: string) {
+			let contains = result.indexOf(name) > -1;
+			return new Promise(function (resolve, reject) {
+				if (contains) {
+					resolve(name);
+				} else {
+					reject('not found');
+				}
+			});
+		}, function (e) { }).then(function (name: any) { return eon(); }, null);
+}
+
+///////////////////////////////////////////////////////////////
+
+
+// cmake 命令提示
 function cmCommandsSuggestions(currentWord: string): Thenable<vscode.CompletionItem[]> {
 	let cmd = cmake_help_command_list();
 	return suggestionsHelper(cmd, currentWord, 'function', cmFunctionInsertText, strContains);
@@ -337,7 +385,9 @@ function cmModulesSuggestionsExact(currentWord: string): Thenable<vscode.Complet
 	return suggestionsHelper(cmd, currentWord, 'module', cmModuleInsertText, strEquals);
 }
 
-
+/**
+ * @brief 自动补全插件，继承于 vscode.CompletionItemProvider
+ */
 class CMakeSuggestionSupport implements vscode.CompletionItemProvider {
 	public excludeTokens: string[] = ['string', 'comment', 'numeric'];
 
@@ -352,6 +402,9 @@ class CMakeSuggestionSupport implements vscode.CompletionItemProvider {
 
 		return new Promise(function (resolve, reject) {
 			Promise.all([
+				// 支持 eon cmake 指令集成
+				cmEONCommandsSuggestions(currentWord),
+				// cmake 原生指令集成
 				cmCommandsSuggestions(currentWord),
 				cmVariablesSuggestions(currentWord),
 				cmPropertiesSuggestions(currentWord),
@@ -376,7 +429,7 @@ class CMakeSuggestionSupport implements vscode.CompletionItemProvider {
 }
 
 /**
- * @brief 内容提示类, 继承官方 HoverProvider 类
+ * @brief 悬停提示类, 继承官方 vscode.HoverProvider 类
  */
 class CMakeExtraInfoSupport implements vscode.HoverProvider {
 

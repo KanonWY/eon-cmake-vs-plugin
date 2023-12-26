@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import child_process = require("child_process");
 import { promises } from "dns";
+import { SecureVersion } from "tls";
 import * as vscode from 'vscode';
 
 ////////////////////////////////////////////////////////////////////////////
@@ -66,11 +67,29 @@ let cmake = (args: string[]): Promise<string> => {
 	});
 };
 
+// eon 函数，用于获取自动补全文档
 let eon = (): Promise<string> => {
 	return new Promise(function (resolve, reject) {
+		// TODO: 返回 eon 的文档补全信息
 		return resolve("eon_add_library\neon_add_executable\neon_add_protobuf\neon_add_executable_test");
 	});
 };
+
+let eon_doc = (eon_command_str: string): Promise<string> => {
+	return new Promise(function (resolve, reject) {
+		// TODO: 根据 eon_command_str 获取到对应的文档消息
+		// TIPS1: 将文档消息存储到一个打包文件中，在运行时将数据读取到内存中，使用MAP 读取。
+		// TIPS2: 将文档消息直接硬编码到程序中，因为文档较小，不会有太高的消息。
+		let eon_doc_map = new Map();
+		eon_doc_map.set("eon_add_library", "xxxxxxxxxxx");
+		eon_doc_map.set("eon_add_executable", "yyyyyyyyyyyyy");
+		eon_doc_map.set("eon_add_protobuf", ">>>>>>>>>>>>>>>>>>");
+		eon_doc_map.set("eon_add_executable_test", "???????????????????");
+		return resolve(eon_doc_map.get("eon_command_str"));
+		// return resolve("eon_add_library\neon_add_executable\neon_add_protobuf\neon_add_executable_test");
+	});
+};
+
 
 // 提取出 cmake 的版本
 function _extractVersion(output: string): string {
@@ -135,6 +154,7 @@ function cmake_help_command(name: string): Promise<string> {
 			});
 		}, function (e) { })
 		.then(function (n: any) {
+			// 返回通过 cmake --help-command command_name 返回的文档信息
 			return cmake(['--help-command', n]);
 		}, null);
 }
@@ -154,7 +174,11 @@ function cmake_help_variable(name: string): Promise<string> {
 					reject('not found');
 				}
 			});
-		}, function (e) { }).then(function (name: any) { return cmake(['--help-variable', name]); }, null);
+		}, function (e) { })
+		.then(function (name: any) {
+			// 返回通过 cmake --help-variable variable_name 返回的文档信息
+			return cmake(['--help-variable', name]);
+		}, null);
 }
 
 function cmake_help_property_list(): Promise<string> {
@@ -172,7 +196,11 @@ function cmake_help_property(name: string): Promise<string> {
 					reject('not found');
 				}
 			});
-		}, function (e) { }).then(function (name: any) { return cmake(['--help-property', name]); }, null);
+		}, function (e) { })
+		.then(function (name: any) {
+			// 返回通过 cmake --help-property property_name 返回的文档信息
+			return cmake(['--help-property', name]);
+		}, null);
 }
 
 function cmake_help_module_list(): Promise<string> {
@@ -229,6 +257,8 @@ function vscodeKindFromCMakeCodeClass(kind: string): vscode.CompletionItemKind {
 			return vscode.CompletionItemKind.Variable;
 		case "module":
 			return vscode.CompletionItemKind.Module;
+		case "eon":
+			return vscode.CompletionItemKind.Function;
 	}
 	return vscode.CompletionItemKind.Property; // TODO@EG additional mappings needed?
 }
@@ -310,6 +340,12 @@ function cmEONCommandsSuggestions(currentWord: string): Thenable<vscode.Completi
 	return suggestionsHelper(cmd, currentWord, 'eon', cmEonInsertText, strContains);
 }
 
+
+function cmEONCommandsSuggestionsExact(currentWord: string): Thenable<vscode.CompletionItem[]> {
+	let cmd = eon_help_list();
+	return suggestionsHelper(cmd, currentWord, 'function', cmFunctionInsertText, strEquals);
+}
+
 function cmEonInsertText(func: string) {
 	let scoped_func = ['eon'];
 	let is_scoped = scoped_func.reduceRight(function (prev, name, idx, array) { return prev || func === name; }, false);
@@ -336,7 +372,7 @@ function eon_help(name: string): Promise<string> {
 					reject('not found');
 				}
 			});
-		}, function (e) { }).then(function (name: any) { return eon(); }, null);
+		}, function (e) { }).then(function (name: any) { return eon_doc(name); }, null);
 }
 
 ///////////////////////////////////////////////////////////////
@@ -439,6 +475,9 @@ class CMakeExtraInfoSupport implements vscode.HoverProvider {
 		let promises: any = cmake_help_all();
 
 		return Promise.all([
+			// TODO: 增加 eon 的悬停提示
+
+			// 常规的悬停提示
 			cmCommandsSuggestionsExact(value),
 			cmVariablesSuggestionsExact(value),
 			cmModulesSuggestionsExact(value),

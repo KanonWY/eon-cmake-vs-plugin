@@ -87,38 +87,7 @@ let eon_doc = (eon_command_str: string): Promise<string> => {
     // 将文档消息直接硬编码到程序中，因为文档较小，不会有太高的消息。
     let eon_doc_map = new Map();
     let eon_add_executable_doc_string: string = `
- # 在本工程下，创建一个可执行目标
- eon_add_executable(name
-   [DEPENDS               [<depend-name> ...]           ]
-
-   [FORCE_DEPENDS         [<depend-name> ...]           ]
-
-   [SOURCES               [<file>      ...  ]           ]
-   [SOURCE_DIRECTORIES    [<directory> ...  ]           ]
-   [INCLUDES              [<directory> ...  ]           ]
-   [LIBRARIES             [<library>   ...  ]           ]
-
-   [NAMED                 <alias>                       ]
-   [HIDDEN]
- )
- -----------------------------------------------------------------
- DEPENDS: 本目标依赖的工程内其他库目标，将自动导入头文件目录、库文件。
-
- FORCE_DEPENDS: 形如 DEPENDS 参数，但会告知链接器将其强制链接。
-
- SOURCES：为本目标导入额外源文件。
-
- SOURCE_DIRECTORIES: 为本目标设置的源文件目录；
-   本函数默认设置的源文件目录为调用本函数的 cmake 文件夹所在目录下的 src/\${name} 目录。
-
- INCLUDES：为本目标导入头文件目录。
-
- LIBRARIES：为本目标导入链接库。
-
- NAMED：库的别名；默认为 \${PROJECT_NAME}_\${name}.
-
- HIDDEN：标识该库不导出；默认通过 install 目标导出。
- -----------------------------------------------------------------
+ #### 构建一个 exe
 	`;
     let eon_add_library_doc_string: string = `
 #### HELLO WORLD
@@ -138,51 +107,6 @@ int main() {
     return resolve(eon_doc_map.get(eon_command_str));
   });
 };
-
-// 提取出 cmake 的版本
-// function _extractVersion(output: string): string {
-//   let re = /cmake\s+version\s+(\d+.\d+.\d+)/;
-//   if (re.test(output)) {
-//     let result = re.exec(output);
-//     if (result === null) {
-//       return '';
-//     } else {
-//       return result[1];
-//     }
-//   }
-//   return '';
-// }
-
-// async function cmake_version(): Promise<string> {
-//   let cmd_output = await cmake([ '--version' ]);
-//   let version = _extractVersion(cmd_output);
-//   return version;
-// }
-
-// Return the url for the online help based on the cmake executable binary used
-// async function cmake_help_url() {
-//   let base_url = 'https://cmake.org/cmake/help';
-//   let version = await cmake_version();
-//   if (version.length > 0) {
-//     if (version >= '3.0') {
-//       let re = /(\d+.\d+).\d+/;
-//       version = version.replace(re, '$1/');
-//     } else {
-//       let older_versions = [
-//         '2.8.12', '2.8.11', '2.8.10', '2.8.9', '2.8.8', '2.8.7', '2.8.6',
-//         '2.8.5', '2.8.4', '2.8.3', '2.8.2', '2.8.1', '2.8.0', '2.6'
-//       ];
-//       if (older_versions.indexOf(version) === -1) {
-//         version = 'latest/';
-//       } else {
-//         version = version + '/cmake.html';
-//       }
-//     }
-//   } else {
-//     version = 'latest/';
-//   }
-//   return base_url + '/v' + version;
-// }
 
 // return the cmake command list
 function cmake_help_command_list(): Promise<string> {
@@ -567,10 +491,7 @@ class CMakeExtraInfoSupport implements vscode.HoverProvider {
           if (label_str.toString().startsWith('eon_')) {
             return promises['eon'](suggestion.label)
                 .then(function(result: string) {
-                  //   let lines = result.split('\n');
-                  //   let hover = new vscode.Hover(
-                  //   {language : 'md', value : lines.join('\n')});
-                  //   return hover;
+                  // 支持 markdown
                   let markdownContent = new vscode.MarkdownString();
                   markdownContent.appendMarkdown(result);
                   let hover = new vscode.Hover(markdownContent);

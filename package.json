@@ -40,7 +40,7 @@
       {
         "title": "CMake configuration",
         "properties": {
-          "cmake.cmakePath": {
+          "cmake.eoncmakePath": {
             "type": "string",
             "default": "cmake",
             "description": "The path to CMake generator executable"

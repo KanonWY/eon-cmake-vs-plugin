@@ -46,7 +46,7 @@ function commandArgs2Array(text: string): string[] {
 
 let cmake = (args: string[]): Promise<string> => {
 	return new Promise(function (resolve, reject) {
-		let cmake_config = config<string>('cmakePath', 'cmake');
+		let cmake_config = config<string>('eoncmakePath', 'cmake');
 		let cmake_args = commandArgs2Array(cmake_config);
 		let cmd = child_process.spawn(cmake_args[0], cmake_args.slice(1, cmake_args.length)
 			.concat(args.map(arg => { return arg.replace(/\r/gm, ''); })));
@@ -71,7 +71,7 @@ let cmake = (args: string[]): Promise<string> => {
 let eon = (): Promise<string> => {
 	return new Promise(function (resolve, reject) {
 		// TODO: 返回 eon 的文档补全信息
-		return resolve("eon_add_library\neon_add_executable\neon_add_protobuf\neon_add_executable_test");
+		return resolve("eon_add_library\neon_add_executable\neon_add_protobuf\neon_add_executable_test\neon_add_subdirectory");
 	});
 };
 
@@ -85,8 +85,8 @@ let eon_doc = (eon_command_str: string): Promise<string> => {
 		eon_doc_map.set("eon_add_executable", "yyyyyyyyyyyyy");
 		eon_doc_map.set("eon_add_protobuf", ">>>>>>>>>>>>>>>>>>");
 		eon_doc_map.set("eon_add_executable_test", "???????????????????");
-		return resolve(eon_doc_map.get("eon_command_str"));
-		// return resolve("eon_add_library\neon_add_executable\neon_add_protobuf\neon_add_executable_test");
+		eon_doc_map.set("eon_add_subdirectory", "eon文档字符床");
+		return resolve(eon_doc_map.get(eon_command_str));
 	});
 };
 
@@ -343,7 +343,7 @@ function cmEONCommandsSuggestions(currentWord: string): Thenable<vscode.Completi
 
 function cmEONCommandsSuggestionsExact(currentWord: string): Thenable<vscode.CompletionItem[]> {
 	let cmd = eon_help_list();
-	return suggestionsHelper(cmd, currentWord, 'function', cmFunctionInsertText, strEquals);
+	return suggestionsHelper(cmd, currentWord, 'function', cmEonInsertText, strEquals);
 }
 
 function cmEonInsertText(func: string) {
@@ -364,15 +364,22 @@ function eon_help_list(): Promise<string> {
 function eon_help(name: string): Promise<string> {
 	return eon_help_list()
 		.then(function (result: string) {
+			// 获取name所在的下表，如果下标为-1，表示没找到
 			let contains = result.indexOf(name) > -1;
 			return new Promise(function (resolve, reject) {
 				if (contains) {
+					// 找到
 					resolve(name);
 				} else {
+					// 拒绝	
 					reject('not found');
 				}
 			});
-		}, function (e) { }).then(function (name: any) { return eon_doc(name); }, null);
+		}, function (e) { })
+		.then(
+			function (name: any) {
+				return eon_doc(name);
+			}, null);
 }
 
 ///////////////////////////////////////////////////////////////
@@ -388,7 +395,6 @@ function cmVariablesSuggestions(currentWord: string): Thenable<vscode.Completion
 	let cmd = cmake_help_variable_list();
 	return suggestionsHelper(cmd, currentWord, 'variable', cmVariableInsertText, strContains);
 }
-
 
 function cmPropertiesSuggestions(currentWord: string): Thenable<vscode.CompletionItem[]> {
 	let cmd = cmake_help_property_list();
@@ -433,7 +439,6 @@ class CMakeSuggestionSupport implements vscode.CompletionItemProvider {
 		if (wordAtPosition && wordAtPosition.start.character < position.character) {
 			var word = document.getText(wordAtPosition);
 			currentWord = word.substr(0, position.character - wordAtPosition.start.character);
-			console.log('--------> currentWord = ', currentWord);
 		}
 
 		return new Promise(function (resolve, reject) {
@@ -469,14 +474,16 @@ class CMakeSuggestionSupport implements vscode.CompletionItemProvider {
  */
 class CMakeExtraInfoSupport implements vscode.HoverProvider {
 
-	public provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Thenable<vscode.Hover> {
+	public provideHover(document: vscode.TextDocument,
+		position: vscode.Position,
+		token: vscode.CancellationToken): Thenable<vscode.Hover> {
+
 		let range = document.getWordRangeAtPosition(position);
 		let value = document.getText(range);
 		let promises: any = cmake_help_all();
-
 		return Promise.all([
 			// TODO: 增加 eon 的悬停提示
-
+			cmEONCommandsSuggestionsExact(value),
 			// 常规的悬停提示
 			cmCommandsSuggestionsExact(value),
 			cmVariablesSuggestionsExact(value),
@@ -488,17 +495,39 @@ class CMakeExtraInfoSupport implements vscode.HoverProvider {
 				return null;
 			}
 			let suggestion: vscode.CompletionItem = suggestions[0];
-
-			return promises[cmakeTypeFromvscodeKind(suggestion.kind!)](suggestion.label).then(function (result: string) {
-				let lines = result.split('\n');
-				lines = lines.slice(2, lines.length);
-				let hover = new vscode.Hover({ language: 'md', value: lines.join('\n') });
-				return hover;
-			});
+			let label_str = suggestion.label;
+			if (label_str.toString().startsWith('eon_')) {
+				return promises['eon'](suggestion.label).then(function (result: string) {
+					let lines = result.split('\n');
+					let hover = new vscode.Hover({ language: 'md', value: lines.join('\n') });
+					return hover;
+				});
+			}
+			else {
+				return promises[cmakeTypeFromvscodeKind(suggestion.kind!)](suggestion.label).then(function (result: string) {
+					let lines = result.split('\n');
+					lines = lines.slice(2, lines.length);
+					let hover = new vscode.Hover({ language: 'md', value: lines.join('\n') });
+					return hover;
+				});
+			}
 		});
 	}
 }
 
+/**
+ *@brief 显示调用函数方法的基本信息 
+ */
+class CMakeSignatureHelpProvider implements vscode.SignatureHelpProvider {
+	public provideSignatureHelp(document: vscode.TextDocument,
+		position: vscode.Position,
+		token: vscode.CancellationToken,
+		context: vscode.SignatureHelpContext): vscode.ProviderResult<vscode.SignatureHelp> {
+		let help = new vscode.SignatureHelp;
+		// TODO: 待完成
+		return help;
+	}
+}
 
 async function cmake_online_help(search: string) {
 	let url = await cmake_help_url();
@@ -573,9 +602,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.demo.testMenuShow', () => {
-			vscode.window.showInformationMessage(`你点我干啥，我长得很帅吗？`);
+			vscode.window.showInformationMessage('eon sub1');
 		}));
 
+	// 测试代码
 	const provide = vscode.languages.registerCompletionItemProvider('cmake', {
 		provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
 			const linePrefix = document.lineAt(position).text.slice(0, position.character);
@@ -589,6 +619,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}, '.');
 
+	// 测试代码
 	const provide2 = vscode.languages.registerCompletionItemProvider('cmake', {
 		provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
 
@@ -606,8 +637,8 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}, '.');
 
+	// 测试代码
 	const provider1 = vscode.languages.registerCompletionItemProvider('plaintext', {
-
 		provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext) {
 
 			// a simple completion item which inserts `Hello World!`
@@ -647,6 +678,7 @@ export function activate(context: vscode.ExtensionContext) {
 			];
 		}
 	});
+
 	const provide3 = vscode.languages.registerCompletionItemProvider('cmake', {
 		provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
 			const line = document.lineAt(position);
@@ -660,16 +692,23 @@ export function activate(context: vscode.ExtensionContext) {
 	// resgister
 	context.subscriptions.push(disposable, getCurPath);
 	context.subscriptions.push(provide, provider1, provide2, provide3);
-
+	/////////////////////////////////////////////////// LANGUAGE ///////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// LANGUAGE register
-
 	const CMAKE_LANGUAGE = 'cmake';
 	const CMAKE_SELECTOR: vscode.DocumentSelector = [
 		{ language: CMAKE_LANGUAGE, scheme: 'file' },
 		{ language: CMAKE_LANGUAGE, scheme: 'untitled' },
 	];
+	// 代码悬停提示支持
 	vscode.languages.registerHoverProvider(CMAKE_SELECTOR, new CMakeExtraInfoSupport());
+	// 代码自动补全支持
 	vscode.languages.registerCompletionItemProvider(CMAKE_SELECTOR, new CMakeSuggestionSupport());
+
+	// TOOD: 函数提示设置
+	// TODO....
+
+	// 语言基本设置
 	vscode.languages.setLanguageConfiguration(CMAKE_LANGUAGE, {
 		indentationRules: {
 			// ^(.*\*/)?\s*\}.*$

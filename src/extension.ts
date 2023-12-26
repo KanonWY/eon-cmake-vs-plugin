@@ -1,9 +1,8 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import child_process = require("child_process");
-import {sign} from "crypto";
-import {promises} from "dns";
-import {SecureVersion} from "tls";
+import * as fs from 'fs';
+import * as path from 'path';
 import * as vscode from 'vscode';
 
 ////////////////////////////////////////////////////////////////////////////
@@ -74,37 +73,42 @@ let eon = (): Promise<string> => {
   return new Promise(function(resolve, reject) {
     // TODO: 返回 eon 的文档补全信息
     return resolve(
-        "eon_add_library\neon_add_executable\neon_add_protobuf\neon_add_executable_test\neon_add_subdirectory");
+        "eon_add_library\neon_add_executable\neon_add_protobuf\neon_add_executable_test\neon_add_subdirectory\neon_find_package\neon_find_packages");
   });
 };
 
+function ReadDocFromMarkdownFile(eon_command_str: string): string {
+  // TODO: 处理异常
+  const DocDir = path.join(__dirname, '../doc');
+  let CurDoc = DocDir + '/' + eon_command_str + '.md';
+  let fileStr;
+  try {
+    fileStr = fs.readFileSync(CurDoc, 'utf8');
+  } catch (err) {
+    fileStr = '无法找到文档';
+  }
+  return fileStr;
+}
+
 let eon_doc = (eon_command_str: string): Promise<string> => {
   return new Promise(function(resolve, reject) {
-    // TODO: 根据 eon_command_str 获取到对应的文档消息
-    // TIPS1:
-    // 将文档消息存储到一个打包文件中，在运行时将数据读取到内存中，使用MAP
-    // 读取。 TIPS2:
-    // 将文档消息直接硬编码到程序中，因为文档较小，不会有太高的消息。
+    // TODO: 效率优化，将这个 map 存储全局内存中
     let eon_doc_map = new Map();
-    let eon_add_executable_doc_string: string = `
- #### 构建一个 exe
-	`;
-    let eon_add_library_doc_string: string = `
-#### HELLO WORLD
-\`\`\`C++
-#include <iostream>
-int main() {
-	std::cout << "hello world" << std::endl;
-	return 0;
-}
-\`\`\`
-	`;
-    eon_doc_map.set("eon_add_library", eon_add_library_doc_string);
-    eon_doc_map.set("eon_add_executable", eon_add_executable_doc_string);
-    eon_doc_map.set("eon_add_protobuf", ">>>>>>>>>>>>>>>>>>");
-    eon_doc_map.set("eon_add_executable_test", "???????????????????");
-    eon_doc_map.set("eon_add_subdirectory", "eon文档字符床");
-    return resolve(eon_doc_map.get(eon_command_str));
+    eon_doc_map.set("eon_add_library",
+                    ReadDocFromMarkdownFile('eon_add_library'));
+    eon_doc_map.set("eon_add_executable",
+                    ReadDocFromMarkdownFile('eon_add_executable'));
+
+    eon_doc_map.set("eon_add_protobuf",
+                    ReadDocFromMarkdownFile('eon_add_protobuf'));
+
+    eon_doc_map.set("eon_find_package",
+                    ReadDocFromMarkdownFile('eon_find_package'));
+
+    eon_doc_map.set("eon_find_packages",
+                    ReadDocFromMarkdownFile('eon_find_packages'));
+    let res = eon_doc_map.get(eon_command_str);
+    return resolve(res);
   });
 };
 
@@ -596,7 +600,6 @@ class CMakeSignatureHelpProvider implements vscode.SignatureHelpProvider {
     let match;
     // 针对匹配上的正则字符串进行操作
     if ((match = fuinctionNameRegx.exec(textBeforeCurso)) !== null) {
-      console.log('===match-> ', match[0].trim());
       let functionName = match[0].trim();
       functionName = functionName.slice(0, -1);
       let signaturesValue = eon_sig_map.get(functionName.toString());
@@ -608,7 +611,6 @@ class CMakeSignatureHelpProvider implements vscode.SignatureHelpProvider {
       help.activeSignature = 0;
       return help;
     } else {
-      console.log('not match');
       return help;
     }
   }

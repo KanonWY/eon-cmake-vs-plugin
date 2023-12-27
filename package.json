@@ -1,7 +1,8 @@
 {
   "name": "eon-cmake",
   "displayName": "eon-cmake",
-  "repository": "description": "eon cmake 补全插件",
+  "repository": "git@github.com:KanonWY/eon-cmake-vs-plugin.git",
+  "description": "eon cmake 补全插件",
   "publisher": "kanon",
   "version": "0.0.1",
   "engines": {

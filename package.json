@@ -1,7 +1,7 @@
 {
-  "name": "vscode-plugin-demo",
-  "displayName": "vscode-plugin-demo",
-  "description": "VSCode插件 demo",
+  "name": "eon-cmake",
+  "displayName": "eon-cmake",
+  "repository": "description": "eon cmake 补全插件",
   "publisher": "kanon",
   "version": "0.0.1",
   "engines": {
@@ -47,66 +47,7 @@
           }
         }
       }
-    ],
-    "commands": [
-      {
-        "command": "extension.sayHello",
-        "title": "EON HELLO"
-      },
-      {
-        "command": "extension.demo.getCurrentFilePath",
-        "title": "Eon Get Cur path"
-      },
-      {
-        "command": "extension.demo.testEditorCommand",
-        "title": "TEST editor"
-      },
-      {
-        "command": "extension.demo.testMenuShow",
-        "title": "该菜单仅在 cmake 中出现"
-      }
-    ],
-    "keybindings": [
-      {
-        "command": "extension.sayHello",
-        "key": "ctrl+f10",
-        "mac": "cmd+f10",
-        "when": "editorTextFocus"
-      }
-    ],
-    "menus": {
-      "editor/context": [
-        {
-          "when": "editorFocus",
-          "command": "extension.sayHello",
-          "group": "navigation@2"
-        },
-        {
-          "when": "editorFocus && resourceLangId == cmake",
-          "command": "extension.demo.getCurrentFilePath",
-          "group": "navigation@1"
-        },
-        {
-          "when": "editorFocus && resourceLangId == cmake",
-          "command": "extension.demo.testMenuShow",
-          "group": "z_commands"
-        }
-      ],
-      "explorer/context": [
-        {
-          "when": "resourceLangId == cmake",
-          "command": "extension.demo.getCurrentFilePath",
-          "group": "navigation"
-        }
-      ],
-      "editor/title": [
-        {
-          "when": "editorFocus && resourceLangId == cmake",
-          "command": "extension.demo.testMenuShow",
-          "group": "navigation"
-        }
-      ]
-    }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

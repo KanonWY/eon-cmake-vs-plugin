@@ -9,8 +9,19 @@
     "vscode": "^1.85.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Programming Languages",
+    "Snippets"
   ],
+  "keywords": [
+    "eon",
+    "CMake",
+    "Syntax"
+  ],
+  "author": {
+    "name": "KanonWY"
+  },
+  "icon": "images/eon.png",
   "activationEvents": [
     "onLanguage:cmake"
   ],
@@ -28,6 +39,15 @@
         "aliases": [
           "CMake"
         ]
+      },
+      {
+        "id": "cmake-cache",
+        "filenames": [
+          "CMakeCache.txt"
+        ],
+        "aliases": [
+          "CMake Cache"
+        ]
       }
     ],
     "grammars": [
@@ -35,6 +55,11 @@
         "language": "cmake",
         "scopeName": "source.cmake",
         "path": "./syntaxes/CMake.tmLanguage"
+      },
+      {
+        "language": "cmake-cache",
+        "scopeName": "source.cmakecache",
+        "path": "./syntaxes/CMakeCache.tmLanguage"
       }
     ],
     "configuration": [

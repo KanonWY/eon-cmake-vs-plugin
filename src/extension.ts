@@ -68,11 +68,6 @@ let cmake = (args: string[]): Promise<string> => {
   });
 };
 
-/**
- * @brief 从 markdwon 文档中读取数据
- * @param eon_command_str
- * @returns
- */
 function ReadDocFromMarkdownFile(eon_command_str: string): string {
   const DocDir = path.join(__dirname, '../doc');
   let CurDoc = DocDir + '/' + eon_command_str + '.md';
@@ -80,12 +75,11 @@ function ReadDocFromMarkdownFile(eon_command_str: string): string {
   try {
     fileStr = fs.readFileSync(CurDoc, 'utf8');
   } catch (err) {
-    fileStr = '无法找到文档';
+    fileStr = 'no doc';
   }
   return fileStr;
 }
 
-// 加载插件的时候启动插件
 let eon_command_arr = new Array();
 let eon_doc_map = new Map();
 let eon_complete_string = '';
@@ -115,10 +109,8 @@ function fillEonCompleteString() {
   for (let eonCmdStr of eon_command_arr) {
     eon_complete_string = eon_complete_string.concat('\n').concat(eonCmdStr);
   }
-  console.log('dddd', eon_complete_string);
 }
 
-// eon 函数，用于获取自动补全文档
 let eon = (): Promise<string> => {
   return new Promise(function(resolve,
                               reject) { return resolve(eon_complete_string); });
@@ -131,7 +123,6 @@ let eon_doc = (eon_command_str: string): Promise<string> => {
   });
 };
 
-// return the cmake command list
 function cmake_help_command_list(): Promise<string> {
   return cmake([ '--help-command-list' ]);
 }
@@ -151,7 +142,6 @@ function cmake_help_command(name: string): Promise<string> {
           },
           function(e) {})
       .then(function(n: any) {
-        // 返回通过 cmake --help-command command_name 返回的文档信息
         return cmake([ '--help-command', n ]);
       }, null);
 }
@@ -175,7 +165,6 @@ function cmake_help_variable(name: string): Promise<string> {
           },
           function(e) {})
       .then(function(name: any) {
-        // 返回通过 cmake --help-variable variable_name 返回的文档信息
         return cmake([ '--help-variable', name ]);
       }, null);
 }
@@ -199,7 +188,6 @@ function cmake_help_property(name: string): Promise<string> {
           },
           function(e) {})
       .then(function(name: any) {
-        // 返回通过 cmake --help-property property_name 返回的文档信息
         return cmake([ '--help-property', name ]);
       }, null);
 }
@@ -238,11 +226,6 @@ function cmake_help_all() {
   return promises;
 }
 
-/**
- * @brief 根据输出的 string 类型获取补全的类型
- * @param kind
- * @returns
- */
 function vscodeKindFromCMakeCodeClass(kind: string): vscode.CompletionItemKind {
   switch (kind) {
   case "function":
@@ -258,11 +241,6 @@ function vscodeKindFromCMakeCodeClass(kind: string): vscode.CompletionItemKind {
       .Property; // TODO@EG additional mappings needed?
 }
 
-/**
- * @brief 根据补全类型获取字符串类型
- * @param kind
- * @returns
- */
 function cmakeTypeFromvscodeKind(kind: vscode.CompletionItemKind): string {
   switch (kind) {
   case vscode.CompletionItemKind.Function:
@@ -334,7 +312,6 @@ function cmPropetryInsertText(variable: string) {
 }
 
 ///////////////////////////////////////////////////////////////
-// eon 命令提示
 function cmEONCommandsSuggestions(currentWord: string):
     Thenable<vscode.CompletionItem[]> {
   let cmd = eon_help_list();
@@ -349,10 +326,7 @@ function cmEONCommandsSuggestionsExact(currentWord: string):
                            strEquals);
 }
 
-function cmEonInsertText(func: string) {
-  // 为了便于触发（ 的参数提示不自动生成括号。
-  return func;
-}
+function cmEonInsertText(func: string) { return func; }
 
 function eon_help_list(): Promise<string> { return eon(); }
 
@@ -360,7 +334,6 @@ function eon_help(name: string): Promise<string> {
   return eon_help_list()
       .then(
           function(result: string) {
-            // 获取name所在的下表，如果下标为-1，表示没找到
             let contains = result.indexOf(name) > -1;
             return new Promise(function(resolve, reject) {
               if (contains) {
@@ -376,7 +349,6 @@ function eon_help(name: string): Promise<string> {
 
 ///////////////////////////////////////////////////////////////
 
-// cmake 命令提示
 function cmCommandsSuggestions(currentWord: string):
     Thenable<vscode.CompletionItem[]> {
   let cmd = cmake_help_command_list();
@@ -433,9 +405,6 @@ function cmModulesSuggestionsExact(currentWord: string):
                            strEquals);
 }
 
-/**
- * @brief 自动补全插件，继承于 vscode.CompletionItemProvider
- */
 class CMakeSuggestionSupport implements vscode.CompletionItemProvider {
   public excludeTokens: string[] = [ 'string', 'comment', 'numeric' ];
 
@@ -454,9 +423,8 @@ class CMakeSuggestionSupport implements vscode.CompletionItemProvider {
     return new Promise(function(resolve, reject) {
       Promise
           .all([
-            // 支持 eon cmake 指令集成
             cmEONCommandsSuggestions(currentWord),
-            // cmake 原生指令集成
+
             cmCommandsSuggestions(currentWord),
             cmVariablesSuggestions(currentWord),
             cmPropertiesSuggestions(currentWord),
@@ -483,9 +451,6 @@ class CMakeSuggestionSupport implements vscode.CompletionItemProvider {
   }
 }
 
-/**
- * @brief 悬停提示类, 继承官方 vscode.HoverProvider 类
- */
 class CMakeExtraInfoSupport implements vscode.HoverProvider {
 
   public provideHover(document: vscode.TextDocument, position: vscode.Position,
@@ -496,9 +461,8 @@ class CMakeExtraInfoSupport implements vscode.HoverProvider {
     let promises: any = cmake_help_all();
     return Promise
         .all([
-          // eon 悬停提示
           cmEONCommandsSuggestionsExact(value),
-          // 常规的悬停提示
+
           cmCommandsSuggestionsExact(value),
           cmVariablesSuggestionsExact(value),
           cmModulesSuggestionsExact(value),
@@ -536,7 +500,7 @@ class CMakeExtraInfoSupport implements vscode.HoverProvider {
 }
 
 /**
- *@brief 显示调用函数方法的基本信息
+ *@brief Signature
  */
 class CMakeSignatureHelpProvider implements vscode.SignatureHelpProvider {
   public provideSignatureHelp(document: vscode.TextDocument,
@@ -650,26 +614,21 @@ export function activate(context: vscode.ExtensionContext) {
     {language : CMAKE_LANGUAGE, scheme : 'file'},
     {language : CMAKE_LANGUAGE, scheme : 'untitled'},
   ];
-  // 代码悬停提示支持
   vscode.languages.registerHoverProvider(CMAKE_SELECTOR,
                                          new CMakeExtraInfoSupport());
-  // 代码自动补全支持
   vscode.languages.registerCompletionItemProvider(CMAKE_SELECTOR,
                                                   new CMakeSuggestionSupport());
 
-  // TOOD: 函数提示设置
   vscode.languages.registerSignatureHelpProvider(
       CMAKE_SELECTOR,
       new CMakeSignatureHelpProvider(),
       '(',
   );
 
-  // TODO: 优化，将所有文件合并为一个
-  // 根据文档提取出命令
   fillEonCommandMap();
   fillEonDocMap();
   fillEonCompleteString();
-  // 语言基本设置
+
   vscode.languages.setLanguageConfiguration(CMAKE_LANGUAGE, {
     indentationRules : {
       // ^(.*\*/)?\s*\}.*$

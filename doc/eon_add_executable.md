@@ -1,4 +1,4 @@
-#### 在本工程下，创建一个可执行目标
+### - 在本工程下，创建一个可执行目标
 ```cmake
 eon_add_executable(name
    [DEPENDS               [<depend-name> ...]           ]
@@ -14,7 +14,8 @@ eon_add_executable(name
    [HIDDEN]
 )
 ```
-#### 参数解释
+---
+### - 参数解释
 | 参数     | 解释 | 
 |---------|------|
 | DEPENDS | 本目标依赖的工程内其他库目标，将自动导入头文件目录、库文件。| 
@@ -25,3 +26,14 @@ eon_add_executable(name
 | LIBRARIES | 为本目标导入链接库|
 | NAMED | 库的别名；默认为 ${PROJECT_NAME}_name|
 |HIDDEN|标识该库不导出；默认通过 install 目标导出|
+---
+### - example
+```cmake
+eon_add_executable(${tool_name}
+   DEPENDS
+      eon-interface
+   LIBRARIES
+      XXX_LIB
+   INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+```

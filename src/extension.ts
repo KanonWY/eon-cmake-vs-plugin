@@ -68,17 +68,12 @@ let cmake = (args: string[]): Promise<string> => {
   });
 };
 
-// eon 函数，用于获取自动补全文档
-let eon = (): Promise<string> => {
-  return new Promise(function(resolve, reject) {
-    // TODO: 返回 eon 的文档补全信息
-    return resolve(
-        "eon_add_library\neon_add_executable\neon_add_protobuf\neon_add_executable_test\neon_add_subdirectory\neon_find_package\neon_find_packages");
-  });
-};
-
+/**
+ * @brief 从 markdwon 文档中读取数据
+ * @param eon_command_str
+ * @returns
+ */
 function ReadDocFromMarkdownFile(eon_command_str: string): string {
-  // TODO: 处理异常
   const DocDir = path.join(__dirname, '../doc');
   let CurDoc = DocDir + '/' + eon_command_str + '.md';
   let fileStr;
@@ -90,23 +85,47 @@ function ReadDocFromMarkdownFile(eon_command_str: string): string {
   return fileStr;
 }
 
+// 加载插件的时候启动插件
+let eon_command_arr = new Array();
+let eon_doc_map = new Map();
+let eon_complete_string = '';
+
+function fillEonCommandMap() {
+  // get all md file in special directory.
+  const DocDir = path.join(__dirname, '../doc');
+  const items = fs.readdirSync(DocDir);
+  for (const item of items) {
+    const itemPath = path.join(DocDir, item);
+    const stats = fs.statSync(itemPath);
+    if (stats.isFile() && item.endsWith('.md')) {
+      let index = item.indexOf('.md');
+      let filename = item.slice(0, index);
+      eon_command_arr.push(filename);
+    }
+  }
+}
+
+function fillEonDocMap() {
+  for (let eonCmdStr of eon_command_arr) {
+    eon_doc_map.set(eonCmdStr, ReadDocFromMarkdownFile(eonCmdStr));
+  }
+}
+
+function fillEonCompleteString() {
+  for (let eonCmdStr of eon_command_arr) {
+    eon_complete_string = eon_complete_string.concat('\n').concat(eonCmdStr);
+  }
+  console.log('dddd', eon_complete_string);
+}
+
+// eon 函数，用于获取自动补全文档
+let eon = (): Promise<string> => {
+  return new Promise(function(resolve,
+                              reject) { return resolve(eon_complete_string); });
+};
+
 let eon_doc = (eon_command_str: string): Promise<string> => {
   return new Promise(function(resolve, reject) {
-    // TODO: 效率优化，将这个 map 存储全局内存中
-    let eon_doc_map = new Map();
-    eon_doc_map.set("eon_add_library",
-                    ReadDocFromMarkdownFile('eon_add_library'));
-    eon_doc_map.set("eon_add_executable",
-                    ReadDocFromMarkdownFile('eon_add_executable'));
-
-    eon_doc_map.set("eon_add_protobuf",
-                    ReadDocFromMarkdownFile('eon_add_protobuf'));
-
-    eon_doc_map.set("eon_find_package",
-                    ReadDocFromMarkdownFile('eon_find_package'));
-
-    eon_doc_map.set("eon_find_packages",
-                    ReadDocFromMarkdownFile('eon_find_packages'));
     let res = eon_doc_map.get(eon_command_str);
     return resolve(res);
   });
@@ -428,8 +447,8 @@ class CMakeSuggestionSupport implements vscode.CompletionItemProvider {
     var currentWord = '';
     if (wordAtPosition && wordAtPosition.start.character < position.character) {
       var word = document.getText(wordAtPosition);
-      currentWord =
-          word.substr(0, position.character - wordAtPosition.start.character);
+      currentWord = word.substring(0, position.character -
+                                          wordAtPosition.start.character);
     }
 
     return new Promise(function(resolve, reject) {
@@ -589,7 +608,7 @@ class CMakeSignatureHelpProvider implements vscode.SignatureHelpProvider {
     eon_sig_map.set('eon_add_executable', eon_add_executable_sig);
     eon_sig_map.set('eon_find_package', eon_find_package_sig);
 
-    // 获取当前行字符床
+    // 获取当前行字符串
     let line = document.lineAt(position.line);
     let textBeforeCurso = line.text.substring(0, position.character);
     let fuinctionNameRegx = /\beon_[a-zA-Z0-9_]+\s*\(/g;
@@ -772,6 +791,11 @@ export function activate(context: vscode.ExtensionContext) {
       '(',
   );
 
+  // TODO: 优化，将所有文件合并为一个
+  // 根据文档提取出命令
+  fillEonCommandMap();
+  fillEonDocMap();
+  fillEonCompleteString();
   // 语言基本设置
   vscode.languages.setLanguageConfiguration(CMAKE_LANGUAGE, {
     indentationRules : {
@@ -823,5 +847,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 // This method is called when your extension is deactivated
 export function deactivate() {
+
   console.log('插件扩展 vscode plugin demo 已被释放!');
 }

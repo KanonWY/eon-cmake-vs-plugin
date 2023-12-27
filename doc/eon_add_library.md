@@ -1,4 +1,4 @@
-#### 在本工程下，创建一个库目标
+### - 在本工程下，创建一个库目标
 ```cmake
 eon_add_library(name
    [DEPENDS               [<depend-name> ...]           ]
@@ -14,8 +14,8 @@ eon_add_library(name
    [HIDDEN]
 )
 ```
-#### 参数描述
-
+---
+### - 参数描述
 | 参数     | 解释 | 
 |---------|------|
 | name |该 protobuf 目标的名称 |
@@ -28,3 +28,13 @@ eon_add_library(name
 | NAMED|库的别名；默认为 ${PROJECT_NAME}_name|
 | SHARED | 标识该库编译为动态库 |
 | HIDDEN | 标识该库不导出；默认通过 install 目标导出 |
+---
+### - example
+```cmake
+eon_add_library(test
+   DEPENDS
+      eon-interface
+   LIBRARIES 
+      yaml
+)
+```

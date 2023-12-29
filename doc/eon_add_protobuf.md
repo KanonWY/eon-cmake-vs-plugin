@@ -1,6 +1,6 @@
-### - 编译 protobuf 文件并创建为库目标，生成的 include 目录与 protobuf 文件的目录保持一致。
+###  编译 protobuf 文件并创建为 target（默认为 static），生成的 include 目录与 protobuf 文件的目录保持一致。
 ```cmake
-eon_add_protobuf(name
+eon_add_protobuf( name
    [SOURCE_DIRECTORIES <protobuf files' directory> ...]
    [DEPENDS            <other protobuf target>     ...]
    [SHARED]
@@ -8,11 +8,11 @@ eon_add_protobuf(name
 )
 ```
 ---
-### - 描述
+###  描述
 本函数不会立即编译 protobuf 文件，并创建对应的库目标。全部的 protobuf 的生成将在 eon_project_complete() 函数中完成。
 
 ---
-### - 参数解释
+###  参数解释
 | 参数     | 解释 | 
 |---------|------|
 | name |该 protobuf 目标的名称 |
@@ -22,7 +22,7 @@ eon_add_protobuf(name
 | HIDDEN | 标识该库不导出；默认通过 install 目标导出 |
 
 ---
-### - example:
+###  example:
 ```cmake
 eon_add_protobuf(eon-interface
         SHARED

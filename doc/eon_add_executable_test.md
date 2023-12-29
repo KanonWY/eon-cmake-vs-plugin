@@ -1,6 +1,6 @@
-### -  在本工程下，创建一个可执行的测试目标。
+###  创建一个可执行的 test target
 ```cmake
-eon_add_executable_test(name
+eon_add_executable_test( test_name
    [DEPENDS               [<depend-name> ...]           ]
 
    [FORCE_DEPENDS         [<depend-name> ...]           ]
@@ -15,12 +15,12 @@ eon_add_executable_test(name
  )
 ```
 ---
-### - 使用说明
+###  使用说明
 本测试目标可与已有的库目标同名，若存在同名库目标，则会自动依赖它，测试目标无法被导出，也无法设置别名，仅用于开发人员调试。
 EON_DONT_COMPILER_TEST: 全局变量，开启后test不编译。
 
 ---
-### - 参数解释
+###  参数解释
 | 参数     | 解释 | 
 |---------|------|
 |CASE| 指定测试目标样例名称|

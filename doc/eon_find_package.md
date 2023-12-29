@@ -1,6 +1,6 @@
-### - 采用多种方式，查找指定的一个第三方库，并将头文件目录、库文件路径添加到对应变量中
+###  采用多种方式，查找指定的一个第三方库，并将头文件目录、库文件路径添加到对应变量中
 ```cmake
-eon_find_package(name
+eon_find_package( package_name
    [COMPONENTS <component> ...]
 ) 
 ```

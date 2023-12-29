@@ -68,20 +68,28 @@ let cmake = (args: string[]): Promise<string> => {
   });
 };
 
-function ReadDocFromMarkdownFile(eon_command_str: string): string {
-  const DocDir = path.join(__dirname, '../doc');
-  let CurDoc = DocDir + '/' + eon_command_str + '.md';
+function readDocFromMarkdownFile(eon_command_str: string): string {
+  const docDir = path.join(__dirname, '../doc');
+  let curDoc = docDir + '/' + eon_command_str + '.md';
   let fileStr;
+  let labeStr;
+  let document;
   try {
-    fileStr = fs.readFileSync(CurDoc, 'utf8');
+    fileStr = fs.readFileSync(curDoc, 'utf8');
+    const lines = fileStr.split('\n');
+    let markdownContent = new vscode.MarkdownString();
+    markdownContent.appendMarkdown(lines[0]);
+    let sig = new vscode.SignatureInformation(lines[2], markdownContent);
+    eon_sig_map.set(eon_command_str, sig);
   } catch (err) {
-    fileStr = 'no doc';
+    fileStr = 'no markdown doc';
   }
   return fileStr;
 }
 
 let eon_command_arr = new Array();
 let eon_doc_map = new Map();
+let eon_sig_map = new Map();
 let eon_complete_string = '';
 
 function fillEonCommandMap() {
@@ -101,7 +109,7 @@ function fillEonCommandMap() {
 
 function fillEonDocMap() {
   for (let eonCmdStr of eon_command_arr) {
-    eon_doc_map.set(eonCmdStr, ReadDocFromMarkdownFile(eonCmdStr));
+    eon_doc_map.set(eonCmdStr, readDocFromMarkdownFile(eonCmdStr));
   }
 }
 
@@ -508,69 +516,6 @@ class CMakeSignatureHelpProvider implements vscode.SignatureHelpProvider {
                               token: vscode.CancellationToken,
                               context: vscode.SignatureHelpContext):
       vscode.ProviderResult<vscode.SignatureHelp> {
-
-    // 获取
-    let eon_find_package_sig =
-        new vscode.SignatureInformation('eon_find_package');
-    eon_find_package_sig.label = `eon_find_package(package_name)`;
-    eon_find_package_sig.documentation =
-        '获取一个包, 如果找不到会使用 pkgconfig 进行查找';
-    eon_find_package_sig.parameters = [
-      {label : 'package_name: string', documentation : '包名'},
-    ];
-
-    // 生成可执行文件
-    let eon_add_executable_sig =
-        new vscode.SignatureInformation('eon_add_executable');
-    eon_add_executable_sig.label = `
-	eon_add_executable( exe_name
-		[DEPENDS                 [<depend-name>...] ]
-		[FORCE_DEPENDS           [<depend-name>...] ]
-		[SOURCES                 [<file>...]        ]
-		[SOURCE_DIRECTORIES      [<directory>...]   ]
-		[INCLUDES                [<directory>...]   ]
-		[LIBRARIES               [<library>...]     ]
-
-		[NAMED                   <alias>            ]
-		[HIDDEN]
-    )
-	`;
-    eon_add_executable_sig.documentation = '生成一个可执行的 cmake target 目标';
-    eon_add_executable_sig.parameters = [
-      {
-        label : 'exe_name: string',
-        documentation : '生成的可执行文件的名称，必须存在'
-      },
-      {
-        label : 'DEPENDS: string arr',
-        documentation : '依赖的内部库名称列表,将自动导入头文件目录、库文件'
-      },
-      {
-        label : 'FORCE_DEPENDS: string arr',
-        documentation : '形如 DEPENDS 参数，但会告知链接器将其强制链接'
-      },
-      {
-        label : 'SOURCES: string arr',
-        documentation : '额外导入文件列表，为本目标导入额外源文件'
-      },
-      {
-        label : 'SOURCE_DIRECTORIES: string arr',
-        documentation : '为本目标设置的源文件目录, 默认为 src/{exe_name}'
-      },
-      {
-        label : 'INCLUDES: string arr',
-        documentation : '为本目标导入头文件目录,默认为 include'
-      },
-      {
-        label : 'LIBRARIES: string arr',
-        documentation :
-            '为本目标导入链接库, 可以为 eon_find_package 找到的或者别的方式引入的'
-      }
-    ];
-
-    let eon_sig_map = new Map();
-    eon_sig_map.set('eon_add_executable', eon_add_executable_sig);
-    eon_sig_map.set('eon_find_package', eon_find_package_sig);
 
     // 获取当前行字符串
     let line = document.lineAt(position.line);

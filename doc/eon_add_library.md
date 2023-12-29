@@ -1,6 +1,6 @@
-### - 在本工程下，创建一个库目标
+###  创建一个库 target, 默认为 shared
 ```cmake
-eon_add_library(name
+eon_add_library( lib_name
    [DEPENDS               [<depend-name> ...]           ]
 
    [FORCE_DEPENDS         [<depend-name> ...]           ]
@@ -15,7 +15,7 @@ eon_add_library(name
 )
 ```
 ---
-### - 参数描述
+###  参数描述
 | 参数     | 解释 | 
 |---------|------|
 | name |该 protobuf 目标的名称 |
@@ -29,7 +29,7 @@ eon_add_library(name
 | SHARED | 标识该库编译为动态库 |
 | HIDDEN | 标识该库不导出；默认通过 install 目标导出 |
 ---
-### - example
+###  example
 ```cmake
 eon_add_library(test
    DEPENDS

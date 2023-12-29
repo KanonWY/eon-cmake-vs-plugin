@@ -4,7 +4,7 @@
   "repository": "https://github.com/KanonWY/eon-cmake-vs-plugin.git",
   "description": "eon cmake 补全插件",
   "publisher": "KanonWY",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.85.0"
   },
